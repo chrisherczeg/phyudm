@@ -1,12 +1,29 @@
 # PhyTrace Unified Data Model (UDM) Specification
 
-**Version:** 0.0.1  
+**Version:** 0.0.2  
 **Status:** Draft  
 **Date:** January 2, 2026
 
 ---
 
 ## Changelog
+
+### Version 0.0.2 (January 2, 2026)
+
+**New Sections:**
+- **Object References:** Added canonical `object_ref` schema for consistent object identity across domains
+
+**ID Semantics:**
+- `detection_id`: Ephemeral, per-frame perception output
+- `tracking_id`: Short-lived perception track (may change after re-ID)
+- `object_id`: Session-stable ID linking perception → manipulation → payload
+- `item_id`: External business identifier (WMS, ERP, asset management)
+
+**Updated Domains:**
+- **Perception (7):** `detections[]` now supports `object_id`, `tracking_id`, `object_type`, `dimensions_m`, `pose`, `frame_id`
+- **Payload/Cargo (15):** `items[]` now includes `object_id` for cross-domain linking; `item_id` clarified as external business identifier
+- **Manipulation (16):** `grasp` now includes `object_id`, `item_id`, `object_type`, `object_class`, `tracking_id`
+- **HRI (17):** `handover` now includes `object_id`, `item_id`, `object_type`, `object_class`
 
 ### Version 0.0.1 (January 2, 2026)
 
@@ -76,12 +93,76 @@ The PhyTrace Unified Data Model (UDM) provides a comprehensive, platform-agnosti
 
 ---
 
+## Object References
+
+Physical objects (packages, tools, pallets, parts, etc.) that robots perceive, manipulate, or transport are referenced consistently across domains using the `object_ref` pattern.
+
+### ID Semantics
+
+| ID Type | Scope | Description |
+|---------|-------|-------------|
+| `detection_id` | Single frame | Unique ID for one perception output (ephemeral, per-frame) |
+| `tracking_id` | Perception track | Short-lived ID for a tracked object; may change after occlusion/re-identification |
+| `object_id` | Session | Stable ID for a physical object within a `session_id`; links perception, manipulation, and payload |
+| `item_id` | External system | Business identifier from WMS, ERP, or asset management (e.g., order number, SKU, asset tag) |
+
+### object_ref Schema
+
+When referencing a physical object, use the following structure:
+
+```json
+{
+  "object_id": "obj-123",
+  "item_id": "ORD-2026-00456",
+  "object_type": "package",
+  "object_class": "cardboard_box",
+  "dimensions_m": { "length": 0.4, "width": 0.3, "height": 0.2 },
+  "mass_kg": 2.5,
+  "tracking_id": "track-001",
+  "detection_confidence": 0.95,
+  "barcode": "1234567890123",
+  "rfid_tag": "RFID-ABC-123",
+  "asset_id": "ASSET-00789",
+  "hazards": ["fragile"],
+  "pose": {
+    "x_m": 1.2,
+    "y_m": 0.5,
+    "z_m": 0.8,
+    "roll_deg": 0.0,
+    "pitch_deg": 0.0,
+    "yaw_deg": 45.0
+  },
+  "frame_id": "world"
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `object_id` | string | Session-stable ID linking perception → manipulation → payload |
+| `item_id` | string | External business identifier (WMS order, SKU, asset tag) |
+| `object_type` | string | High-level type: `package`, `pallet`, `tote`, `bin`, `tool`, `part`, `container`, `unknown` |
+| `object_class` | string | Specific classification from perception (e.g., `cardboard_box`, `plastic_tote`) |
+| `dimensions_m` | object | Physical dimensions: `length`, `width`, `height` |
+| `mass_kg` | float | Known or estimated mass |
+| `tracking_id` | string | Current perception tracking ID (may change) |
+| `detection_confidence` | float | Confidence score from perception (0.0–1.0) |
+| `barcode` | string | Barcode value if scanned |
+| `rfid_tag` | string | RFID tag ID if detected |
+| `asset_id` | string | Asset management system ID |
+| `hazards` | array[string] | Hazard labels: `fragile`, `flammable`, `corrosive`, `heavy`, `temperature_sensitive` |
+| `pose` | object | Object pose if known (position + orientation) |
+| `frame_id` | string | Reference frame for pose |
+
+**Usage:** Not all fields are required. Include `object_id` when linking across domains. Include `item_id` when correlating with business systems.
+
+---
+
 ## Schema Version & Compatibility
 
 ```json
 {
-  "udm_version": "0.0.1",
-  "udm_schema": "https://phyware.io/schemas/udm/v0.0.1"
+  "udm_version": "0.0.2",
+  "udm_schema": "https://phyware.io/schemas/udm/v0.0.2"
 }
 ```
 
@@ -720,13 +801,33 @@ Sensor readings and environmental perception.
     "detections": [
       {
         "detection_id": "det-001",
-        "class": "person",
+        "object_id": "obj-789",
+        "tracking_id": "track-001",
+        "class": "pallet",
+        "object_type": "pallet",
         "confidence": 0.95,
         "distance_m": 3.2,
         "bearing_deg": 15.0,
+        "velocity_mps": 0.0,
+        "bounding_box": {"x": 100, "y": 50, "w": 120, "h": 80},
+        "dimensions_m": { "length": 1.2, "width": 0.8, "height": 0.15 },
+        "pose": {
+          "x_m": 4.5,
+          "y_m": 2.1,
+          "z_m": 0.0,
+          "yaw_deg": 90.0
+        },
+        "frame_id": "map"
+      },
+      {
+        "detection_id": "det-002",
+        "tracking_id": "track-002",
+        "class": "person",
+        "confidence": 0.92,
+        "distance_m": 5.1,
+        "bearing_deg": -30.0,
         "velocity_mps": 1.1,
-        "bounding_box": {"x": 100, "y": 50, "w": 80, "h": 200},
-        "tracking_id": "track-001",
+        "bounding_box": {"x": 200, "y": 50, "w": 80, "h": 200},
         "pose_estimation": {
           "skeleton_detected": true,
           "body_orientation_deg": 180
@@ -1287,15 +1388,19 @@ Cargo, payload, and load management for logistics and delivery robots.
     ],
     "items": [
       {
-        "item_id": "pkg-12345",
-        "item_type": "package",
+        "object_id": "obj-456",
+        "item_id": "ORD-2026-00789",
+        "object_type": "package",
+        "object_class": "cardboard_box",
         "weight_kg": 5.2,
+        "dimensions_m": { "length": 0.4, "width": 0.3, "height": 0.2 },
         "loaded_at": "2026-01-02T10:15:00Z",
         "destination": "dock-5",
         "fragile": false,
         "temperature_sensitive": true,
         "barcode": "1234567890123",
-        "rfid_tag": "RFID-ABC-123"
+        "rfid_tag": "RFID-ABC-123",
+        "asset_id": "ASSET-00123"
       }
     ],
     "load_shifted": false,
@@ -1313,7 +1418,13 @@ Cargo, payload, and load management for logistics and delivery robots.
 | `center_of_gravity` | object | Payload center of gravity offset |
 | `compartments` | array | Individual storage compartments |
 | `compartments[].temperature_c` | float | Compartment temperature for cold chain |
-| `items` | array | Individual cargo items/packages |
+| `items` | array | Individual cargo items/packages (see `object_ref`) |
+| `items[].object_id` | string | Session-stable ID linking to perception/manipulation |
+| `items[].item_id` | string | External business identifier (WMS order, SKU, asset tag) |
+| `items[].object_type` | string | Object type: `package`, `pallet`, `tote`, `bin`, `part`, etc. |
+| `items[].object_class` | string | Specific classification from perception |
+| `items[].dimensions_m` | object | Physical dimensions |
+| `items[].asset_id` | string | Asset management system ID |
 | `load_shifted` | boolean | Payload shift detected |
 | `secured` | boolean | Payload properly secured |
 
@@ -1362,6 +1473,10 @@ Robot arm manipulation, grasping, and end-effector state for cobots and manipula
     "grasp": {
       "grasp_id": "grasp-001",
       "object_id": "obj-123",
+      "item_id": "PART-A-001",
+      "object_type": "part",
+      "object_class": "metal_bracket",
+      "tracking_id": "track-001",
       "grasp_type": "pinch",
       "grasp_quality": 0.92,
       "stable": true,
@@ -1392,7 +1507,10 @@ Robot arm manipulation, grasping, and end-effector state for cobots and manipula
 | `end_effector.tool_center_point` | object | TCP pose in robot frame |
 | `workspace` | object | Workspace and collision status |
 | `motion_plan` | object | Current motion plan status |
-| `grasp` | object | Current grasp information |
+| `grasp` | object | Current grasp information (uses `object_ref`) |
+| `grasp.object_id` | string | Session-stable ID of grasped object |
+| `grasp.item_id` | string | External business identifier of grasped object |
+| `grasp.tracking_id` | string | Perception tracking ID of grasped object |
 | `tool_changer` | object | Automatic tool changer status |
 | `force_control` | object | Force/torque control status |
 
@@ -1444,6 +1562,9 @@ Human interaction, collaboration, and social robotics data.
       "in_progress": true,
       "direction": "robot_to_human",
       "object_id": "obj-123",
+      "item_id": "TOOL-WR-15",
+      "object_type": "tool",
+      "object_class": "wrench",
       "human_id": "human-001",
       "phase": "extending",
       "ready_to_release": false
@@ -1470,7 +1591,9 @@ Human interaction, collaboration, and social robotics data.
 | `tracked_humans` | array | Detected and tracked humans in vicinity |
 | `tracked_humans[].ppe_detected` | object | Personal Protective Equipment detection |
 | `voice` | object | Voice interaction and speech recognition |
-| `handover` | object | Object handover state (robot ↔ human) |
+| `handover` | object | Object handover state (robot ↔ human, uses `object_ref`) |
+| `handover.object_id` | string | Session-stable ID of handover object |
+| `handover.item_id` | string | External business identifier of handover object |
 | `social` | object | Social interaction metrics (hospitality/service robots) |
 | `safety_rating` | object | ISO/TS 15066 collaborative safety status |
 
@@ -1971,7 +2094,7 @@ Vendor-specific and custom data.
 
 ```json
 {
-  "udm_version": "0.0.1",
+  "udm_version": "0.0.2",
   "event_id": "01941a2b-3c4d-7e8f-9a0b-1c2d3e4f5a6b",
   "event_type": "telemetry.periodic",
   "source_id": "robot-001",
