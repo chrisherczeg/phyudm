@@ -1,12 +1,35 @@
 # PhyTrace Unified Data Model (UDM) Specification
 
-**Version:** 0.0.2  
+**Version:** 0.0.3  
 **Status:** Draft  
-**Date:** January 2, 2026
+**Date:** January 12, 2026
 
 ---
 
 ## Changelog
+
+### Version 0.0.3 (January 12, 2026)
+
+**Collaborative Robot Safety:**
+- **Safety Domain (8):** Added `collaborative_operation` section covering:
+  - `operation_mode`: Collaborative operation modes per ANSI/RIA R15.06 (safety_rated_monitored_stop, speed_separation_monitoring, power_force_limiting, hand_guiding)
+  - `safety_config_checksum`: Unique identifier for safety parameter verification per RIA TR R15.606
+  - `speed_separation`: Dynamic protective separation distance monitoring with speed limits
+  - `power_force_limits`: Maximum force/power values per ISO/TS 15066
+  - `contact_event`: Quasi-static vs transient contact classification with biomechanical limits
+  - `body_region_limits`: Per-body-region force/pressure thresholds per ISO/TS 15066 Annex A
+- **Operational Domain (5):** Added `collaborative` to operational mode enum
+- **Manipulation Domain (16):** Added `hand_guiding` control mode and hand guiding state tracking
+- **Event Types:** Added collaborative-specific events:
+  - `safety.collaborative_mode_entered`, `safety.collaborative_mode_exited`
+  - `safety.contact_detected`, `safety.force_limit_exceeded`
+  - `safety.separation_violated`, `safety.config_checksum_mismatch`
+  - `manipulation.hand_guiding_started`, `manipulation.hand_guiding_completed`
+
+**Standards Compliance:**
+- Enhanced support for ANSI/RIA R15.06 and RIA TR R15.606 collaborative robot requirements
+- ISO/TS 15066 biomechanical limits and contact event classification
+- Safety-rated monitored stop, speed and separation monitoring, power and force limiting
 
 ### Version 0.0.2 (January 2, 2026)
 
@@ -161,8 +184,8 @@ When referencing a physical object, use the following structure:
 
 ```json
 {
-  "udm_version": "0.0.2",
-  "udm_schema": "https://phyware.io/schemas/udm/v0.0.2"
+  "udm_version": "0.0.3",
+  "udm_schema": "https://phyware.io/schemas/udm/v0.0.3"
 }
 ```
 
@@ -202,6 +225,12 @@ Every UDM event is wrapped in a standard envelope:
 | `safety.violation` | Safety rule violation detected |
 | `safety.warning` | Safety threshold approaching |
 | `safety.e_stop` | Emergency stop triggered |
+| `safety.collaborative_mode_entered` | Entered collaborative operation mode |
+| `safety.collaborative_mode_exited` | Exited collaborative operation mode |
+| `safety.contact_detected` | Physical contact with human detected |
+| `safety.force_limit_exceeded` | Force/power limit exceeded during contact |
+| `safety.separation_violated` | Minimum protective separation distance violated |
+| `safety.config_checksum_mismatch` | Safety configuration checksum verification failed |
 | `task.started` | Task execution began |
 | `task.completed` | Task execution completed |
 | `task.failed` | Task execution failed |
@@ -243,6 +272,8 @@ Every UDM event is wrapped in a standard envelope:
 | `manipulation.grasp_failed` | Grasp attempt failed |
 | `manipulation.object_placed` | Object placement completed |
 | `manipulation.tool_changed` | End-effector/tool change completed |
+| `manipulation.hand_guiding_started` | Hand guiding mode initiated |
+| `manipulation.hand_guiding_completed` | Hand guiding mode ended |
 | `environment.door_opened` | Door/gate opened |
 | `environment.elevator_called` | Elevator requested |
 | `environment.elevator_entered` | Entered elevator |
@@ -564,7 +595,7 @@ High-level operational mode and task status.
 | `queue` | object | Task queue status |
 | `errors` | array | Active errors/warnings |
 
-**Modes:** `autonomous`, `manual`, `teleoperated`, `semi_autonomous`, `learning`, `maintenance`, `emergency`, `idle`, `standby`, `off`
+**Modes:** `autonomous`, `manual`, `teleoperated`, `semi_autonomous`, `collaborative`, `learning`, `maintenance`, `emergency`, `idle`, `standby`, `off`
 
 **States:** `idle`, `executing_task`, `waiting`, `charging`, `error`, `maintenance`, `emergency_stop`, `initializing`, `shutting_down`, `paused`
 
@@ -912,10 +943,186 @@ Safety-related status and events.
         }
       }
     ],
-    "safety_score": 95.0
+    "safety_score": 95.0,
+    "collaborative_operation": {
+      "enabled": true,
+      "operation_mode": "speed_separation_monitoring",
+      "safety_config_checksum": "A7F3B2E9",
+      "config_last_verified": "2026-01-12T08:00:00Z",
+      "mode_transition_allowed": true,
+      "speed_separation": {
+        "active": true,
+        "min_protective_separation_m": 0.5,
+        "current_separation_m": 1.8,
+        "separation_violation": false,
+        "max_tcp_speed_mps": 0.25,
+        "current_tcp_speed_mps": 0.15,
+        "max_joint_speed_pct": 50,
+        "stopping_time_ms": 150,
+        "stopping_distance_m": 0.05,
+        "human_approach_speed_mps": 1.6,
+        "calculation_method": "iso_ts_15066_annex_a"
+      },
+      "power_force_limits": {
+        "max_static_force_n": 140.0,
+        "max_transient_force_n": 150.0,
+        "max_pressure_pa": 110000,
+        "max_power_w": 80.0,
+        "current_force_n": 0.0,
+        "current_power_w": 0.0,
+        "limit_exceeded": false
+      },
+      "contact_event": {
+        "contact_detected": false,
+        "contact_type": null,
+        "body_region": null,
+        "measured_force_n": 0.0,
+        "measured_pressure_pa": 0.0,
+        "contact_duration_ms": 0,
+        "limit_exceeded": false,
+        "timestamp": null
+      },
+      "body_region_limits": {
+        "skull_face": {
+          "max_quasi_static_force_n": 130,
+          "max_quasi_static_pressure_pa": 110000,
+          "max_transient_force_n": 130,
+          "max_transient_power_w": 65
+        },
+        "forehead": {
+          "max_quasi_static_force_n": 130,
+          "max_quasi_static_pressure_pa": 110000,
+          "max_transient_force_n": 130,
+          "max_transient_power_w": 65
+        },
+        "neck": {
+          "max_quasi_static_force_n": 140,
+          "max_quasi_static_pressure_pa": 110000,
+          "max_transient_force_n": 150,
+          "max_transient_power_w": 75
+        },
+        "back_shoulders": {
+          "max_quasi_static_force_n": 210,
+          "max_quasi_static_pressure_pa": 110000,
+          "max_transient_force_n": 210,
+          "max_transient_power_w": 105
+        },
+        "chest": {
+          "max_quasi_static_force_n": 140,
+          "max_quasi_static_pressure_pa": 110000,
+          "max_transient_force_n": 140,
+          "max_transient_power_w": 70
+        },
+        "abdomen_pelvis": {
+          "max_quasi_static_force_n": 140,
+          "max_quasi_static_pressure_pa": 110000,
+          "max_transient_force_n": 140,
+          "max_transient_power_w": 70
+        },
+        "upper_arms_elbows": {
+          "max_quasi_static_force_n": 150,
+          "max_quasi_static_pressure_pa": 110000,
+          "max_transient_force_n": 150,
+          "max_transient_power_w": 75
+        },
+        "forearms_hands": {
+          "max_quasi_static_force_n": 140,
+          "max_quasi_static_pressure_pa": 110000,
+          "max_transient_force_n": 160,
+          "max_transient_power_w": 80
+        },
+        "thighs_knees": {
+          "max_quasi_static_force_n": 220,
+          "max_quasi_static_pressure_pa": 110000,
+          "max_transient_force_n": 220,
+          "max_transient_power_w": 110
+        },
+        "lower_legs": {
+          "max_quasi_static_force_n": 220,
+          "max_quasi_static_pressure_pa": 110000,
+          "max_transient_force_n": 220,
+          "max_transient_power_w": 110
+        }
+      },
+      "monitored_stop": {
+        "active": false,
+        "all_axes_stationary": true,
+        "position_monitoring_active": true,
+        "max_position_deviation_mm": 0.5,
+        "stop_category": "category_2"
+      },
+      "workspace_monitoring": {
+        "collaborative_workspace_active": true,
+        "workspace_id": "cobot_cell_01",
+        "humans_in_workspace": 1,
+        "robot_stopped_for_human": false,
+        "workspace_boundaries_m": {
+          "x_min": -1.5,
+          "x_max": 1.5,
+          "y_min": -1.5,
+          "y_max": 1.5,
+          "z_min": 0.0,
+          "z_max": 2.0
+        }
+      }
+    }
   }
 }
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `safety_state` | string | Overall safety status: `normal`, `warning`, `protective_stop`, `emergency_stop`, `fault` |
+| `e_stop` | object | Emergency stop status and metadata |
+| `safety_zones` | object | Safety zone status for protected/warning zones |
+| `proximity` | object | Proximity monitoring to humans, robots, obstacles |
+| `bumpers` | object | Physical bumper sensor status |
+| `safety_lidar` | object | Safety-rated LiDAR field status |
+| `force_torque` | object | Force/torque contact detection |
+| `violations` | array | Active safety violations/warnings |
+| `safety_score` | float | Overall safety score (0-100) |
+| `collaborative_operation` | object | Collaborative robot operation per ANSI/RIA R15.06, RIA TR R15.606, ISO/TS 15066 |
+| `collaborative_operation.enabled` | boolean | Collaborative operation capability enabled |
+| `collaborative_operation.operation_mode` | string | Current collaborative operation mode (see Collaborative Operation Modes) |
+| `collaborative_operation.safety_config_checksum` | string | Unique identifier for safety parameter configuration (RIA TR R15.606 Section 5.4.2) |
+| `collaborative_operation.config_last_verified` | string | ISO 8601 timestamp of last safety configuration verification |
+| `collaborative_operation.mode_transition_allowed` | boolean | Whether mode transitions are currently allowed |
+| `collaborative_operation.speed_separation` | object | Speed and separation monitoring (ANSI/RIA R15.06 Part 1 Section 5.10.4) |
+| `collaborative_operation.speed_separation.min_protective_separation_m` | float | Minimum protective separation distance (meters) |
+| `collaborative_operation.speed_separation.current_separation_m` | float | Current separation distance to nearest human (meters) |
+| `collaborative_operation.speed_separation.max_tcp_speed_mps` | float | Maximum tool center point speed (m/s) |
+| `collaborative_operation.speed_separation.stopping_time_ms` | float | Robot stopping time (milliseconds) |
+| `collaborative_operation.power_force_limits` | object | Power and force limiting (ANSI/RIA R15.06 Part 1 Section 5.10.5) |
+| `collaborative_operation.power_force_limits.max_static_force_n` | float | Maximum quasi-static contact force (Newtons) |
+| `collaborative_operation.power_force_limits.max_transient_force_n` | float | Maximum transient contact force (Newtons) |
+| `collaborative_operation.power_force_limits.max_pressure_pa` | float | Maximum contact pressure (Pascals) |
+| `collaborative_operation.contact_event` | object | Contact event detection and classification |
+| `collaborative_operation.contact_event.contact_type` | string | Contact type: `quasi_static` (clamping), `transient` (free body) |
+| `collaborative_operation.contact_event.body_region` | string | Body region contacted (see Body Regions) |
+| `collaborative_operation.body_region_limits` | object | Per-body-region biomechanical limits per ISO/TS 15066 Annex A Table A.2 |
+| `collaborative_operation.monitored_stop` | object | Safety-rated monitored stop (ANSI/RIA R15.06 Part 1 Section 5.10.2) |
+| `collaborative_operation.monitored_stop.all_axes_stationary` | boolean | All robot axes confirmed stationary |
+| `collaborative_operation.monitored_stop.position_monitoring_active` | boolean | Continuous position monitoring active |
+| `collaborative_operation.workspace_monitoring` | object | Collaborative workspace monitoring |
+| `collaborative_operation.workspace_monitoring.humans_in_workspace` | integer | Number of humans detected in collaborative workspace |
+
+**Collaborative Operation Modes:** (per ANSI/RIA R15.06-2012 and RIA TR R15.606-2016)
+- `safety_rated_monitored_stop`: Robot in verified stopped state, human can enter workspace
+- `hand_guiding`: Human manually guides robot via teach pendant or direct contact
+- `speed_separation_monitoring`: Robot and human work concurrently with maintained separation and speed limits
+- `power_force_limiting`: Robot and human can have physical contact within biomechanical limits
+
+**Body Regions:** (per ISO/TS 15066 Annex A Table A.1)
+- `skull_face`: Skull and face (except forehead)
+- `forehead`: Forehead region
+- `neck`: Neck region (high risk)
+- `back_shoulders`: Back and shoulders
+- `chest`: Chest region (moderate risk)
+- `abdomen_pelvis`: Abdomen and pelvis (moderate risk)
+- `upper_arms_elbows`: Upper arms and elbow joints
+- `forearms_hands`: Forearms and hands (most common contact)
+- `thighs_knees`: Thighs and knee joints
+- `lower_legs`: Lower legs and shins
 
 ---
 
@@ -1440,6 +1647,14 @@ Robot arm manipulation, grasping, and end-effector state for cobots and manipula
     "arm_id": "arm_main",
     "arm_state": "moving",
     "control_mode": "position",
+    "hand_guiding": {
+      "active": false,
+      "enabled_device_active": false,
+      "max_speed_mps": 0.25,
+      "force_feedback_enabled": true,
+      "teaching_mode": false,
+      "waypoint_recorded": false
+    },
     "end_effector": {
       "effector_id": "gripper_2f",
       "effector_type": "parallel_gripper",
@@ -1502,7 +1717,13 @@ Robot arm manipulation, grasping, and end-effector state for cobots and manipula
 | Field | Type | Description |
 |-------|------|-------------|
 | `arm_state` | string | Arm state: `idle`, `moving`, `holding`, `collision_stop` |
-| `control_mode` | string | Control mode: `position`, `velocity`, `force`, `impedance` |
+| `control_mode` | string | Control mode: `position`, `velocity`, `force`, `impedance`, `hand_guiding` |
+| `hand_guiding` | object | Hand guiding mode status (ANSI/RIA R15.06 Part 1 Section 5.10.3) |
+| `hand_guiding.active` | boolean | Hand guiding currently active |
+| `hand_guiding.enabled_device_active` | boolean | Three-position enabling device engaged (if required) |
+| `hand_guiding.max_speed_mps` | float | Maximum TCP speed during hand guiding (m/s) |
+| `hand_guiding.force_feedback_enabled` | boolean | Force feedback/gravity compensation active |
+| `hand_guiding.teaching_mode` | boolean | Teaching/programming mode active |
 | `end_effector` | object | Current end-effector status |
 | `end_effector.tool_center_point` | object | TCP pose in robot frame |
 | `workspace` | object | Workspace and collision status |
