@@ -1,4 +1,4 @@
-# PhyUDM & PhyTrace for Mobile Robot Safety Compliance
+# UDM for Mobile Robot Safety Compliance
 
 **Document Version:** 1.0.0  
 **Date:** January 22, 2026  
@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document demonstrates how the PhyTrace Unified Data Model (UDM) and PhyTrace SDK can be used to track, monitor, and ensure compliance with key industry safety standards for mobile robotic platforms, including:
+This document demonstrates how the Unified Data Model (UDM) and any conforming SDK can be used to track, monitor, and ensure compliance with key industry safety standards for mobile robotic platforms, including:
 
 - **ANSI/ITSDF B56.5** – Safety standard for driverless automatic guided industrial vehicles
 - **ISO 3691-4** – Safety of industrial trucks - driverless industrial trucks
@@ -17,11 +17,11 @@ This document demonstrates how the PhyTrace Unified Data Model (UDM) and PhyTrac
 
 ---
 
-## Why Use PhyUDM & PhyTrace for Safety Compliance?
+## Why Use UDM for Safety Compliance?
 
 ### 1. **Comprehensive Audit Trail**
 
-Safety standards require documentation and traceability. PhyTrace provides:
+Safety standards require documentation and traceability. UDM-based tooling provides:
 
 - Immutable event records with cryptographic provenance
 - Timestamped telemetry at microsecond precision
@@ -30,7 +30,7 @@ Safety standards require documentation and traceability. PhyTrace provides:
 
 ### 2. **Real-Time Safety Monitoring**
 
-Unlike periodic manual inspections, PhyTrace enables:
+Unlike periodic manual inspections, UDM-based continuous monitoring enables:
 
 - Continuous telemetry streaming at configurable intervals (1-100+ Hz)
 - Immediate detection of safety threshold violations
@@ -39,7 +39,7 @@ Unlike periodic manual inspections, PhyTrace enables:
 
 ### 3. **Cross-Platform Normalization**
 
-Different AGV/AMR manufacturers produce different data formats. PhyUDM:
+Different AGV/AMR manufacturers produce different data formats. UDM:
 
 - Normalizes all telemetry to a canonical schema
 - Enables fleet-wide safety analytics across mixed vendors
@@ -48,7 +48,7 @@ Different AGV/AMR manufacturers produce different data formats. PhyUDM:
 
 ### 4. **Regulatory Reporting**
 
-When incidents occur, investigators need data. PhyTrace provides:
+When incidents occur, investigators need data. UDM provides:
 
 - Queryable event database for incident reconstruction
 - Export capabilities for regulatory submissions
@@ -809,25 +809,25 @@ AGVs must follow predefined guidepaths. This example shows how to track deviatio
 
 ---
 
-## PhyTrace SDK Integration Example
+## SDK Integration Example
 
 ### Python Code for Safety Telemetry Capture
 
 ```python
 """
 Example: Capturing AGV safety telemetry for B56.5 compliance
-using the PhyTrace SDK.
+using a hypothetical UDM-conforming SDK (`udm_sdk`).
 """
 
-from phytrace import (
-    PhyTraceAgent,
+from udm_sdk import (
+    UdmAgent,
     UDMEventBuilder,
     SourceType,
     PeriodicEmitter,
     OnChangeEmitter,
     EventEmitter
 )
-from phytrace.domains import (
+from udm_sdk.domains import (
     PowerDomain,
     SafetyDomain,
     ActuatorsDomain,
@@ -835,8 +835,8 @@ from phytrace.domains import (
     ComplianceDomain
 )
 
-# Initialize the PhyTrace agent
-agent = PhyTraceAgent.from_config("phytrace-agent.yaml")
+# Initialize the UDM agent
+agent = UdmAgent.from_config("udm-agent.yaml")
 
 # Configure periodic telemetry for battery monitoring (B56.5 requirement)
 battery_emitter = PeriodicEmitter(
@@ -957,11 +957,11 @@ if __name__ == "__main__":
 
 ---
 
-## Compliance Reporting with PhyTrace
+## Compliance Reporting with UDM
 
 ### Automated Compliance Reports
 
-PhyTrace enables automated generation of compliance reports by querying the telemetry database:
+UDM-based platforms enable automated generation of compliance reports by querying the telemetry database:
 
 | Report Type | Standards | Data Sources | Frequency |
 |-------------|-----------|--------------|-----------|
@@ -975,7 +975,7 @@ PhyTrace enables automated generation of compliance reports by querying the tele
 ### Example Query: E-Stop Events Last 30 Days
 
 ```sql
--- PhyTrace Analytics Query
+-- UDM Analytics Query
 SELECT 
     captured_at,
     source_id,
@@ -1023,16 +1023,16 @@ ORDER BY
 
 ## Conclusion
 
-The PhyTrace Unified Data Model provides comprehensive coverage for mobile robot safety compliance. By capturing telemetry across all relevant domains, organizations can:
+The Unified Data Model provides comprehensive coverage for mobile robot safety compliance. By capturing telemetry across all relevant domains, organizations can:
 
 1. **Demonstrate Compliance** – Provide auditors with complete, timestamped evidence
 2. **Prevent Incidents** – Use real-time monitoring to catch issues before they become incidents
 3. **Investigate Thoroughly** – Reconstruct any incident with full sensor and state data
 4. **Improve Continuously** – Analyze trends to enhance safety over time
 
-For questions or implementation support, contact PhyWare Engineering.
+For questions or implementation support, open an issue in this repository.
 
 ---
 
-**Document Maintainer:** PhyWare Engineering  
+**Document Maintainer:** UDM Specification Authors  
 **Last Updated:** January 22, 2026

@@ -1,4 +1,4 @@
-# PhyTrace Unified Data Model (UDM) Specification
+# Unified Data Model (UDM) Specification
 
 **Version:** 0.0.3  
 **Status:** Draft  
@@ -92,11 +92,11 @@
 
 ## Overview
 
-The PhyTrace Unified Data Model (UDM) provides a comprehensive, platform-agnostic schema for representing telemetry and events from any autonomous system. The UDM is designed to:
+The Unified Data Model (UDM) provides a comprehensive, platform-agnostic schema for representing telemetry and events from any autonomous system. The UDM is designed to:
 
 1. **Normalize** diverse robot telemetry into a consistent, queryable format
 2. **Preserve** original platform-specific data for debugging and audit
-3. **Enable** PhySafe rules, PhyComp compliance, and Phylyze analytics across all robot types
+3. **Enable** safety rules, compliance checking, and analytics across all robot types
 4. **Support** vendor extensions without schema conflicts
 5. **Scale** from simple AMRs to complex multi-modal autonomous vehicles
 
@@ -185,7 +185,7 @@ When referencing a physical object, use the following structure:
 ```json
 {
   "udm_version": "0.0.3",
-  "udm_schema": "https://phyware.io/schemas/udm/v0.0.3"
+  "udm_schema": "https://schemas.phyudm.org/v0.0.3"
 }
 ```
 
@@ -208,7 +208,7 @@ Every UDM event is wrapped in a standard envelope:
 | `source_id` | string | Yes | Unique identifier of the data source (robot, sensor, system) |
 | `source_type` | string | Yes | Source classification (see Source Types) |
 | `captured_at` | string | Yes | ISO 8601 timestamp when data was captured at source |
-| `received_at` | string | No | ISO 8601 timestamp when data was received by PhyTrace |
+| `received_at` | string | No | ISO 8601 timestamp when data was received by the ingest layer |
 | `sent_at` | string | No | ISO 8601 timestamp when data was sent from source |
 | `sequence_num` | integer | No | Monotonic sequence number from source |
 | `session_id` | string | No | Session/run identifier for grouping events |
@@ -299,7 +299,7 @@ Every UDM event is wrapped in a standard envelope:
 | `legged_robot` | Legged locomotion robot | Quadrupeds, bipeds |
 | `marine_robot` | Marine autonomous system | AUVs, surface vessels |
 | `simulation` | Simulated robot | Digital twins, test environments |
-| `edge_gateway` | Edge computing node | PhyEdge, on-prem gateways |
+| `edge_gateway` | Edge computing node | On-prem gateways, edge compute nodes |
 | `fleet_manager` | Fleet management system | Orchestration, dispatch |
 | `external_sensor` | External sensor system | Cameras, LiDAR not on robot |
 | `human` | Human actor | Workers, pedestrians (for context) |
@@ -1351,7 +1351,7 @@ Network, fleet, and integration status.
         "last_sync": "2026-01-02T10:34:50Z"
       }
     ],
-    "phytrace": {
+    "vendor_extensions": {
       "agent_version": "1.2.0",
       "connected": true,
       "buffer_size": 150,
@@ -2401,7 +2401,7 @@ Vendor-specific and custom data.
 
 ## OpenTelemetry Compatibility Layer
 
-For customers requiring OpenTelemetry integration, PhyTrace provides an OTel exporter that maps UDM events to OTel primitives:
+Conforming implementations MAY provide an OpenTelemetry exporter that maps UDM events to OTel primitives as follows:
 
 | UDM Domain | OTel Primitive | Mapping |
 |------------|----------------|---------|
@@ -2412,21 +2412,21 @@ For customers requiring OpenTelemetry integration, PhyTrace provides an OTel exp
 | `identity.*` | OTel Resource Attributes | Standard resource identification |
 | `location.*` | OTel Attributes | `geo.lat`, `geo.lon`, custom attrs |
 
-The UDM remains the canonical format for PhyCloud; the OTel exporter is an interoperability layer.
+The UDM remains the canonical format for any conforming backend; the OTel exporter is an interoperability layer.
 
 ---
 
 ## Provenance Metadata
 
-For PhyCloud's immutability and chain-of-custody requirements, events include:
+For immutability and chain-of-custody requirements, events MAY include provenance metadata:
 
 ```json
 {
   "provenance": {
-    "capture_source": "phytrace_agent",
+    "capture_source": "udm_agent",
     "capture_version": "1.2.0",
     "capture_host": "robot-001",
-    "ingest_node": "phycloud-ingest-east-1",
+    "ingest_node": "udm-ingest-east-1",
     "ingest_timestamp": "2026-01-02T10:35:00.345678Z",
     "hash": "sha256:abc123...",
     "previous_hash": "sha256:def456...",
@@ -2589,7 +2589,7 @@ To ensure interoperability, vendors should register their extension namespaces:
 | `nvidia_isaac` | NVIDIA | `https://nvidia.com/schemas/isaac-udm-ext/v1` | Isaac Sim integration |
 | `ros2` | ROS 2 Community | `https://ros.org/schemas/udm-ext/v1` | ROS 2 message mappings |
 
-*To register a vendor extension namespace, contact PhyWare Engineering.*
+*To register a vendor extension namespace, open a pull request against this specification.*
 
 ---
 
@@ -2624,4 +2624,4 @@ To ensure interoperability, vendors should register their extension namespaces:
 
 **Document Version:** 0.0.1  
 **Last Updated:** January 2, 2026  
-**Maintainer:** PhyWare Engineering
+**Maintainer:** UDM Specification Authors
