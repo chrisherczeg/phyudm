@@ -9,6 +9,43 @@ once it reaches `v0.1.0`.
 
 ## [Unreleased]
 
+### Added — Phase 3 (third wave): `udm-mcp` MCP server ⭐
+
+- **New `udm-mcp` crate** (`crates/udm-mcp/`) producing a stdio MCP
+  server built on the official `rmcp 1.7` Rust SDK. Speaks JSON-RPC 2.0
+  per the [Model Context Protocol specification](https://modelcontextprotocol.io);
+  every log line goes to stderr so it doesn't corrupt the stdout
+  framing.
+- **10 tools** registered via `#[tool_router]`, each with auto-generated
+  `input_schema` via `schemars`:
+  - **Data-plane (7):** `query_events`, `get_event`, `timeline`,
+    `correlate_events`, `aggregate`, `compliance_audit`,
+    `incident_reconstruction`.
+  - **Schema introspection (3):** `explain_field`, `list_event_types`,
+    `validate_udm_event`.
+- **Backend-agnostic.** Consumes the `UdmEventStore` trait from
+  PhyWare#316; ships the same `memory:` and `phycloud:` URL schemes as
+  the `udm` CLI for backend selection. Tools fail with a clear
+  `Unsupported` error when the active backend can't service a request
+  (so e.g. the phycloud-stub returns a clear "not yet implemented"
+  diagnostic instead of silently failing).
+- **Embedded schemas** — `validate_udm_event` and `explain_field` use
+  the same `include_str!`-embedded v0.0.3 artifacts the CLI ships, so
+  the binary is self-contained and works offline.
+- **Compliance lookup table** mirrors the CLI's (iso-ts-15066,
+  iso-13482, ansi-ria-r15.06, iso-3691-4) so analysts get identical
+  audit semantics across CLI and MCP surfaces.
+- **Filter expression parser** is duplicated from the CLI (deliberately
+  — keeps `udm-mcp` from depending on the CLI's clap surface). Same
+  grammar: `field=value`, `field!=value`, `field in [a,b]`,
+  `field contains text`, `field exists`.
+- **End-to-end integration test** (`crates/udm-mcp/tests/mcp_integration.rs`)
+  spawns the binary, drives the full JSON-RPC handshake + 5 tool calls
+  over stdio, asserts every tool name appears in `tools/list` and that
+  each call returns the expected payload shape.
+
+Toward PhyWare#302.
+
 ### Added — Phase 3 (second wave): `udm` CLI
 
 - **New `udm-cli` crate** (`crates/udm-cli/`) producing a self-contained
