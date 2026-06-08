@@ -5,12 +5,14 @@
 
 PYTHON ?= python3
 PIP ?= $(PYTHON) -m pip
+CARGO ?= cargo
 SCHEMA_VERSION ?= 0.0.3
 
 CHANGELOG_BASE ?= origin/main
 
 .PHONY: help install build-schemas build-conformance build validate \
-        validate-fixture conformance changelog-check check clean
+        validate-fixture conformance changelog-check check clean \
+        rust-fmt rust-clippy rust-test rust-build rust-check rust-all
 
 help:  ## Show this help.
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | \
@@ -40,8 +42,27 @@ conformance: validate  ## Alias for `validate` (run the conformance suite).
 changelog-check:  ## Fail if schemas/ or spec/ changed without updating CHANGELOG.md.
 	$(PYTHON) tools/changelog_check.py --base $(CHANGELOG_BASE)
 
-check: validate changelog-check  ## Run all gating checks (validate + changelog-check).
+check: validate changelog-check rust-check  ## Run all gating checks.
+
+# -------- Rust workspace (crates/*) -------------------------------------
+
+rust-fmt:  ## Check Rust formatting (cargo fmt --check).
+	$(CARGO) fmt --all -- --check
+
+rust-clippy:  ## Run clippy with -D warnings across the workspace.
+	$(CARGO) clippy --workspace --all-targets -- -D warnings
+
+rust-test:  ## Run the Rust workspace test suite.
+	$(CARGO) test --workspace --all-targets
+
+rust-build:  ## Build the Rust workspace.
+	$(CARGO) build --workspace
+
+rust-check: rust-fmt rust-clippy rust-test  ## Run fmt + clippy + test for the Rust workspace.
+
+rust-all: rust-build rust-check  ## Build + fmt + clippy + test.
 
 clean:  ## Remove caches.
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +
 	find . -name '._*' -delete
+	$(CARGO) clean
