@@ -13,6 +13,9 @@
 
 - 📖 **Read the spec** → [`spec/index.md`](./spec/index.md)
 - 🧰 **Single-file copy for diffing** → [`spec/udm-spec.md`](./spec/udm-spec.md)
+- 📐 **JSON Schema artifacts** → [`schemas/v0.0.3/`](./schemas/v0.0.3/)
+- ✅ **Conformance suite** → [`conformance/`](./conformance/)
+- 🏷️ **Versioning contract** → [`spec/versioning.md`](./spec/versioning.md)
 - 📝 **Change history** → [`CHANGELOG.md`](./CHANGELOG.md)
 - 🤝 **Contribute** → [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 
@@ -53,8 +56,10 @@ Highlights:
 - [Core Envelope](./spec/envelope.md) — required fields on every event.
 - [Event Types](./spec/event-types.md) — canonical event-type taxonomy.
 - [Source Types](./spec/source-types.md) — canonical data-source enumeration.
-- [24 domain schemas](./spec/index.md#domain-schemas-24) — from Identity
-  through Extensions.
+- [Schema Version & Compatibility](./spec/versioning.md) — SemVer rules,
+  `$id` URL pattern, deprecation policy, compatibility matrix.
+- [23 domain schemas](./spec/index.md#domain-schemas-23) — from Identity
+  through Compliance.
 - [Vendor Extension Registry](./spec/appendix-b.md) — how vendors register
   reserved namespaces without polluting the standard.
 
@@ -62,14 +67,17 @@ Highlights:
 
 Want to emit UDM from a robot, simulator, or fleet manager? Pair the
 [Core Envelope](./spec/envelope.md) with the relevant
-[domain pages](./spec/index.md#domain-schemas-24), then validate your
-output. The [Complete UDM Event Example](./spec/event-example.md)
+[domain pages](./spec/index.md#domain-schemas-23), then validate your
+output with the canonical JSON Schema (`make validate`). The
+[Complete UDM Event Example](./spec/event-example.md)
 shows a fully-populated event payload spanning multiple domains.
 
-> **Coming in Phase 2** (tracked in chrisherczeg/PhyWare#314): a
-> language-agnostic JSON Schema (Draft 2020-12) artifact set, schema
-> versioning contract, and conformance test suite. Until those land,
-> the markdown spec is normative.
+> **Phase 2 — landed.** Canonical JSON Schema (Draft 2020-12) artifacts
+> live under [`schemas/v0.0.3/`](./schemas/v0.0.3/); a 129-fixture
+> conformance suite (67 valid + 46 invalid + 15 edge + 1 legacy) lives
+> under [`conformance/`](./conformance/); the versioning contract is at
+> [`spec/versioning.md`](./spec/versioning.md). Run `make validate` to
+> exercise the suite locally.
 
 ### 3. AI / agent developers (LLM tooling, autonomous codegen)
 
@@ -103,19 +111,19 @@ A minimal UDM event looks like:
 
 ```jsonc
 {
-  "event_id": "evt-2026-01-12-001",
-  "event_type": "telemetry.location",
-  "timestamp": "2026-01-12T10:35:00.123456Z",
-  "udm_schema": "https://schemas.phyudm.org/v0.0.3",
+  "udm_version": "0.0.3",
+  "event_id": "01940000-0000-7000-8000-000000000001",
+  "event_type": "telemetry_periodic",
+  "source_id": "robot-001",
+  "source_type": "amr",
+  "captured_at": "2026-01-12T10:35:00.123456Z",
   "identity": {
     "source_id": "robot-001",
     "source_type": "amr"
   },
   "location": {
-    "frame": "map",
-    "x_m": 12.34,
-    "y_m": 56.78,
-    "z_m": 0.0
+    "frame_id": "map",
+    "local": { "x_m": 12.34, "y_m": 56.78, "z_m": 0.0 }
   }
 }
 ```
@@ -133,8 +141,9 @@ for a fully-worked multi-domain example.
 | Aspect | State |
 |---|---|
 | Specification text | `v0.0.3` (draft) — see [`CHANGELOG.md`](./CHANGELOG.md) |
-| JSON Schema artifacts | Not yet published (Phase 2) |
-| Conformance suite | Not yet published (Phase 2) |
+| JSON Schema artifacts | ✅ [`schemas/v0.0.3/`](./schemas/v0.0.3/) (Phase 2) |
+| Conformance suite | ✅ [`conformance/`](./conformance/) — 129 fixtures (Phase 2) |
+| Versioning contract | ✅ [`spec/versioning.md`](./spec/versioning.md) (Phase 2) |
 | CLI validator | Not yet published (Phase 3) |
 | MCP server | Not yet published (Phase 3) |
 | Repository visibility | Pre-launch staging on a personal account; will migrate to a vendor-neutral org before `v0.1.0` |

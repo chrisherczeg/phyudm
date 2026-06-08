@@ -16,7 +16,7 @@ diffing across versions.
 - [Overview](./overview.md) — what UDM is and the problem it solves.
 - [Design Principles](./design-principles.md) — the guiding tenets.
 - [Object References](./object-references.md) — first-class entity refs.
-- [Schema Version & Compatibility](./schema-versioning.md) — versioning
+- [Schema Version & Compatibility](./versioning.md) — versioning
   contract and forward/backward compatibility guarantees.
 
 ## Core schema
@@ -25,7 +25,14 @@ diffing across versions.
 - [Event Types](./event-types.md) — canonical event-type taxonomy.
 - [Source Types](./source-types.md) — canonical data-source enumeration.
 
-## Domain schemas (24)
+## Domain schemas (23)
+
+> The canonical schema artifacts (`schemas/v0.0.3/domains/*`) cover the
+> 23 structured domains below. Free-form vendor or experimental data
+> belongs in the event-level `extensions` field (see
+> [`spec/event-example.md`](./event-example.md)); a dedicated "Extensions
+> Domain" is *not* part of `v0.0.3` even though the narrative page below
+> describes the design intent for a future structured form.
 
 - [1. Identity Domain](./domains/01-identity.md)
 - [2. Location Domain](./domains/02-location.md)
@@ -50,7 +57,9 @@ diffing across versions.
 - [21. Audio Domain](./domains/21-audio.md)
 - [22. Environment Interaction Domain](./domains/22-environment-interaction.md)
 - [23. Compliance/Certification Domain](./domains/23-compliance-certification.md)
-- [24. Extensions Domain](./domains/24-extensions.md)
+- [24. Extensions Domain](./domains/24-extensions.md) — *narrative only in
+  `v0.0.3`; no JSON Schema artifact. Use the envelope-level `extensions`
+  field. See [versioning.md](./versioning.md) for the upgrade path.*
 
 ## Reference & operational guidance
 
