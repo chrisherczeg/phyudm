@@ -818,45 +818,52 @@ def emit_edge() -> int:
 
 
 def emit_legacy() -> int:
+    """Legacy fixtures are *vendored* — they are checked into the repo by
+    hand at first capture and never regenerated. We still ensure the
+    ``meta.yaml`` stays in sync with this script (the JSON fixture body
+    is left untouched).
+    """
     folder = CONFORMANCE_DIR / "legacy"
-    src = REPO_ROOT.parent / "PhyWare" / "PhyCloud" / "rust" / "tests" / "fixtures" / "udm_event_request.json"
-    if src.exists():
-        dst = folder / "01-phycloud-udm-event-request.json"
+    fixture = folder / "01-phycloud-udm-event-request.json"
+    src = (REPO_ROOT.parent / "PhyWare" / "PhyCloud" / "rust" / "tests"
+           / "fixtures" / "udm_event_request.json")
+    if not fixture.exists() and src.exists():
         folder.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(src, dst)
-        _write_yaml_only(folder, "01-phycloud-udm-event-request", {
-            "purpose": (
-                "Legacy fixture from PhyCloud/rust/tests/fixtures/udm_event_request.json. "
-                "Captured here to track drift between historical PhyCloud test "
-                "payloads and the canonical UDM schema."
-            ),
-            "expected_result": "drift_documented",
-            "schema_path": EVENT_SCHEMA,
-            "drift": [
-                {"field": "udm_version", "actual": "1.0",
-                 "expected": "0.0.3",
-                 "resolution": "PhyCloud fixture to be regenerated against v0.0.3."},
-                {"field": "event_type", "actual": "telemetry",
-                 "expected": "telemetry_periodic",
-                 "resolution": "Canonical event_type taxonomy uses *_periodic suffix."},
-                {"field": "identity.robot_id", "actual": "amr-7",
-                 "expected": "identity.source_id",
-                 "resolution": "Rust SDK + spec normalize on source_id; "
-                               "robot_id was a pre-Phase-1 alias."},
-                {"field": "location.{x,y,frame}", "actual": "{x,y,frame}",
-                 "expected": "location.local.{x_m,y_m} + location.frame_id",
-                 "resolution": "Canonical schema uses explicit units (_m) and "
-                               "the location.local sub-object; flat x/y/frame is "
-                               "from the pre-Phase-1 location schema."},
-            ],
-            "notes": (
-                "This fixture does NOT validate against the canonical schema "
-                "and is excluded from --conformance pass criteria for the "
-                "legacy/ partition. Resolution is tracked in PhyWare#307/#308."
-            ),
-        })
-        return 1
-    return 0
+        shutil.copyfile(src, fixture)
+    if not fixture.exists():
+        return 0
+    _write_yaml_only(folder, "01-phycloud-udm-event-request", {
+        "purpose": (
+            "Legacy fixture from PhyCloud/rust/tests/fixtures/udm_event_request.json. "
+            "Captured here to track drift between historical PhyCloud test "
+            "payloads and the canonical UDM schema."
+        ),
+        "expected_result": "drift_documented",
+        "schema_path": EVENT_SCHEMA,
+        "drift": [
+            {"field": "udm_version", "actual": "1.0",
+             "expected": "0.0.3",
+             "resolution": "PhyCloud fixture to be regenerated against v0.0.3."},
+            {"field": "event_type", "actual": "telemetry",
+             "expected": "telemetry_periodic",
+             "resolution": "Canonical event_type taxonomy uses *_periodic suffix."},
+            {"field": "identity.robot_id", "actual": "amr-7",
+             "expected": "identity.source_id",
+             "resolution": "Rust SDK + spec normalize on source_id; "
+                           "robot_id was a pre-Phase-1 alias."},
+            {"field": "location.{x,y,frame}", "actual": "{x,y,frame}",
+             "expected": "location.local.{x_m,y_m} + location.frame_id",
+             "resolution": "Canonical schema uses explicit units (_m) and "
+                           "the location.local sub-object; flat x/y/frame is "
+                           "from the pre-Phase-1 location schema."},
+        ],
+        "notes": (
+            "This fixture does NOT validate against the canonical schema "
+            "and is excluded from --conformance pass criteria for the "
+            "legacy/ partition. Resolution is tracked in PhyWare#307/#308."
+        ),
+    })
+    return 1
 
 
 def _write_yaml_only(folder: Path, name: str, meta: dict[str, Any]) -> None:
@@ -867,7 +874,10 @@ def _write_yaml_only(folder: Path, name: str, meta: dict[str, Any]) -> None:
 
 def main() -> None:
     # Wipe + regenerate to keep the suite deterministic.
-    for sub in ("valid", "invalid", "edge", "legacy"):
+    # NOTE: legacy/ is excluded — legacy fixtures are vendored once and
+    # never regenerated (the source PhyWare repo may not be available in
+    # CI or downstream clones).
+    for sub in ("valid", "invalid", "edge"):
         d = CONFORMANCE_DIR / sub
         if d.exists():
             for p in d.iterdir():
