@@ -9,6 +9,56 @@ once it reaches `v0.1.0`.
 
 ## [Unreleased]
 
+### Added — Phase 3 (final wave): AI cookbook
+
+- **`docs/ai-cookbook/`** with an index + 4 cookbook articles + 4
+  seeded NDJSON fixtures, completing Phase 3 of the parent epic.
+- **Articles** (each runnable end-to-end via the `memory` adapter, no
+  commercial dependencies):
+  1. [`01-wire-into-client.md`](./docs/ai-cookbook/01-wire-into-client.md)
+     — Claude Desktop / Cursor / Copilot CLI setup recipes pointing
+     at the bundled 6-event fixture; ends with a real `timeline`
+     prompt and the agent's expected output.
+  2. [`02-incident-reconstruction.md`](./docs/ai-cookbook/02-incident-reconstruction.md)
+     — Walks the LLM through reconstructing a hardware e-stop on
+     `amr-014` at `2026-03-14T14:22:03Z` using
+     `incident_reconstruction` + `correlate_events` + `explain_field`.
+     Full tool-call trace + root-cause narrative.
+  3. [`03-compliance-audit.md`](./docs/ai-cookbook/03-compliance-audit.md)
+     — Bulk ISO/TS 15066 evidence pull over Q1 2026 across 3 cobots:
+     `compliance_audit` → `query_events` → `aggregate` → per-event
+     `get_event` for citation. 195 in-scope events, 67 force-limit
+     violations, per-source bucket counts.
+  4. [`04-fleet-health-qa.md`](./docs/ai-cookbook/04-fleet-health-qa.md)
+     — Operator-style Q&A across an 8-robot warehouse-east fleet
+     using `aggregate` (min SoC), `timeline` (mode changes), and
+     `query_events` (safety violations). Live-telemetry-as-conversation
+     pattern.
+- **Datasets** at `docs/ai-cookbook/datasets/` (regenerable via
+  `python3 docs/ai-cookbook/build_datasets.py`):
+  - `wire-into-client.ndjson` (6 events)
+  - `incident-amr-014.ndjson` (14 events)
+  - `compliance-iso-ts-15066-q1.ndjson` (195 events)
+  - `fleet-health-warehouse-east.ndjson` (242 events)
+  Every event in every dataset validates against
+  `schemas/v0.0.3/event.schema.json`.
+- **Each article**: scenario, setup, full tool-call trace (MCP tool
+  name + arguments + truncated result), final agent output, copy-pasteable
+  "Try it yourself" prompt, and an optional "Going to production with
+  PhyCloud" appendix.
+
+### Manual verification still needed for PhyWare#303
+
+The acceptance criterion *"tested against ≥2 actual LLM clients
+(Claude Desktop + one of Cursor / Copilot CLI / Continue) and
+confirmed working"* requires interactive verification that can't be
+driven by CI. All tool call paths exercised by the cookbook are
+covered by `crates/udm-mcp/tests/mcp_integration.rs`, but the
+end-to-end "type the prompt in Claude Desktop, see the answer"
+workflow needs a human-in-the-loop pass before the OSS launch (#312).
+
+Toward PhyWare#303.
+
 ### Added — Phase 3 (third wave): `udm-mcp` MCP server ⭐
 
 - **New `udm-mcp` crate** (`crates/udm-mcp/`) producing a stdio MCP
