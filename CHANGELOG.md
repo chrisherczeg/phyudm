@@ -9,6 +9,55 @@ once it reaches `v0.1.0`.
 
 ## [Unreleased]
 
+### Added — Phase 3 (first wave): `UdmEventStore` adapter trait
+
+- **New Rust workspace** at the repository root (`Cargo.toml` +
+  `clippy.toml`). All future Rust crates land under `crates/`.
+- **`udm-eventstore`** crate (`crates/udm-eventstore/`) — the adapter
+  trait that lets UDM analysis tooling query any UDM-conforming
+  telemetry backend through a single contract. Surface:
+  - `UdmEventStore` (`async_trait`): `get_event`, `query_events`,
+    `timeline`, `aggregate`, `capabilities`.
+  - `UdmEvent` typed envelope mirroring `schemas/v0.0.3/event.schema.json`
+    (required + optional envelope fields, 23 domain map, `provenance`,
+    free-form `extensions`).
+  - Query layer: `EventQuery`, `Predicate` (`Eq` / `Ne` / `In` /
+    `Contains` / `Exists` / `And` / `Or` over JSON-Pointer-style
+    paths), `OrderBy`, `EventPage`, `TimeRange`,
+    `AggregateQuery`/`AggregateBucket`/`AggregateResult`,
+    `StoreCapabilities`, `GetEventOptions`.
+  - `Error` taxonomy: `Unsupported`, `InvalidQuery`, `NotFound`,
+    `Unavailable`, `Forbidden`, `Serde`, `Io`, `Backend`.
+  - **Reusable conformance harness** at
+    `udm_eventstore::conformance::run_full_suite(...)` — community
+    adapters self-test by hydrating the bundled deterministic fixture
+    (`conformance.ndjson`, 6 events / 3 sources / 4 event types) and
+    running the same suite.
+- **`udm-eventstore-memory`** crate
+  (`crates/udm-eventstore-memory/`) — in-process `Vec<UdmEvent>`
+  adapter, constructible from a `Vec<UdmEvent>`, an NDJSON string, or
+  an NDJSON file. Advertises full capability support
+  (`supports_aggregation: true`, `supports_full_text: true`,
+  `supports_ordered_streaming: true`); useful as a behavioural ceiling
+  against which to test other adapters. Passes the full conformance
+  suite. Scope: testing, demos, cookbook reproducibility — **not a
+  production deployment target**.
+- **`udm-eventstore-phycloud`** crate
+  (`crates/udm-eventstore-phycloud/`) — **stub** at v0.0.3. Compiles,
+  exposes `PhyCloudConfig` + `PhyCloudStore`, implements every trait
+  method by returning `Error::Unsupported` with a pointer to the
+  full-implementation tracking issues (PhyWare#307 / PhyWare#308).
+  Capabilities accurately report the adapter as not yet implemented so
+  downstream tooling fails closed rather than appearing to work.
+- **Rust CI** (`.github/workflows/rust-ci.yml`): `cargo fmt --check`,
+  `cargo clippy -D warnings`, `cargo test --workspace --all-targets`,
+  `cargo build --release` on every push + PR.
+- **Makefile** Rust targets: `rust-fmt`, `rust-clippy`, `rust-test`,
+  `rust-build`, `rust-check`, `rust-all`. Folded into the top-level
+  `make check`.
+
+Toward PhyWare#316.
+
 ### Added — Phase 2: Machine-Readable Schema Artifacts
 
 - **JSON Schema (Draft 2020-12) artifacts** under
