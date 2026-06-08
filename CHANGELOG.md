@@ -9,6 +9,54 @@ once it reaches `v0.1.0`.
 
 ## [Unreleased]
 
+### Added — Phase 3 (second wave): `udm` CLI
+
+- **New `udm-cli` crate** (`crates/udm-cli/`) producing a self-contained
+  `udm` binary. Schemas embedded via `include_str!` so validation works
+  offline. Backed by the same `UdmEventStore` trait the upcoming
+  `udm-mcp` server uses.
+- **Schema / validation subcommands** (CI- and author-facing):
+  - `udm validate <file> [--schema-version]` — validate a payload
+    against the canonical event schema (uses the `boon` Draft 2020-12
+    validator).
+  - `udm schema show [version] [--artifact event|envelope|object_ref|<domain>]`
+    — print a JSON Schema artifact.
+  - `udm schema diff <left> <right>` — unified textual diff of two
+    event schemas.
+  - `udm explain <field-path>` — print spec metadata (`type`,
+    `description`, `enum`) for any JSON-Pointer-style field path.
+  - `udm conformance run [--schema-version] [--external <bin>]` — run
+    the bundled conformance suite against the embedded validator or an
+    external validator binary.
+  - `udm template --source-type --event-type --domains` — print a
+    skeleton event for hand-editing.
+- **Analysis subcommands** (operator- and LLM-agent-facing):
+  - `udm query --filter EXPR --from --to --limit --cursor --source-id`
+    — paginated structured search; outputs JSON-Lines.
+  - `udm get <event_id> [--include-provenance]` — fetch one event.
+  - `udm timeline <source_id> --from --to` — time-ordered event stream
+    for one source.
+  - `udm correlate <event_id> --window --domains` — find related events
+    across domains around a seed event.
+  - `udm audit <standard> --from --to [--source-id]` — compliance audit
+    (built-in: `iso-ts-15066`, `iso-13482`, `ansi-ria-r15.06`,
+    `iso-3691-4`).
+  - `udm aggregate --field --by --agg --from --to --filter` — group /
+    fleet metrics (`count`/`sum`/`avg`/`min`/`max`).
+- **Backend selection** via `--store URL` or `UDM_STORE` env var.
+  Supported: `memory:///path.ndjson` (in-process); `phycloud://endpoint`
+  (stub — see PhyWare#307/#308).
+- **Filter expression syntax** (shared by `query` and `aggregate`):
+  `field=value`, `field!=value`, `field in [a,b,c]`,
+  `field contains text`, `field exists`.
+- **Output format** is JSON-Lines by default (pipes cleanly to `jq` and
+  LLM agents); `--output pretty` for human consumption.
+- **14 integration tests** under `crates/udm-cli/tests/cli_integration.rs`
+  cover every subcommand end-to-end against the `memory` adapter and
+  the embedded schema bundle.
+
+Toward PhyWare#301.
+
 ### Added — Phase 3 (first wave): `UdmEventStore` adapter trait
 
 - **New Rust workspace** at the repository root (`Cargo.toml` +
