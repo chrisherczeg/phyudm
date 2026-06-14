@@ -81,6 +81,7 @@ pub fn build_validator(version: &str) -> CliResult<CompiledValidator> {
     let bundle = schemas::load_version(version)?;
     let mut schemas = Schemas::new();
     let mut compiler = Compiler::new();
+    compiler.enable_format_assertions();
 
     // Register every artifact under its $id so internal refs resolve.
     for (name, value) in bundle.iter_artifacts() {
